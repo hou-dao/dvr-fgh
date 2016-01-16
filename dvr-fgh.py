@@ -130,7 +130,7 @@ def main ():
     print energies
 
    # Check orthogonal
-    if any(abs(np.dot(wavefunc.T,wavefunc)-np.eye(ne))>1.e-12):
+    if np.any(abs(np.dot(wavefunc.T,wavefunc)-np.eye(ne))>1.e-12):
         raise ValueError("Wavefunction is not orthogonal!")
 
     for imod in xrange(nmod):
