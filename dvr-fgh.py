@@ -1,6 +1,5 @@
 import numpy as np
 import json
-from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 from scipy.sparse import coo_matrix
 from math import sqrt, exp, pi, cos
@@ -8,13 +7,6 @@ from math import sqrt, exp, pi, cos
 am2au = 1822.88742
 au2ar = 0.52917706
 cm2au = 4.5554927e-6
-
-def encode (i_list,cum_prod,nlen):
-    i_rank = 0
-    for i in xrange(nlen-1):
-        i_rank += i_list[i]*cum_prod[i]
-    i_rank += i_list[-1]
-    return i_rank
 
 def decode (i_rank,cum_prod,nlen):
     i_list = []
@@ -86,9 +78,7 @@ def main ():
     for i in xrange(1,nmod):
         cum_prod[i] = cum_prod[i-1]*modes[nmod-i-1]['nr']
 
-    hams = []
-    for m in modes:
-        hams.append(get_ham_1d(m))
+    hams = [get_ham_1d(m) for m in modes]
 
     row, col, val = [], [], []
     for i in xrange(ndim):
