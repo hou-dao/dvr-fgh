@@ -36,14 +36,14 @@ def get_ham_1d (m):
 
     m0, ri, rf, de, be, re, nr = m['m0'], m['ri'], m['rf'], m['de'], m['be'], m['re'], m['nr']
 
-    nk, dr, dk = (nr-1)/2, (rf-ri)/nr, 2.0*pi/(rf-ri)
+    nk, dr, dk = (nr-1)/2, (rf-ri)/(nr-1), 2.0*pi/(rf-ri)
     ttmp = dk*dk/(2.0*m0)
     ham = np.zeros((nr,nr),dtype=float)
     for i in xrange(nr):
         for j in xrange(nr):
             for k in xrange(nk):
-                tk = 2.0*pi*(k+1)*(i-j)/nr
-                ham[i,j] += cos(tk)*ttmp*(k+1)*(k+1)*2.0/nr
+                tk = 2.0*pi*(k+1)*(i-j)/(nr-1)
+                ham[i,j] += cos(tk)*ttmp*(k+1)*(k+1)*2.0/(nr-1)
         ham[i,i] += get_pot_1d(de,be,re,ri+i*dr)
     return ham
 
@@ -56,9 +56,7 @@ def main ():
 
     with open('input.json','r') as f:
         d = json.load(f)
-    ne = d['ne']
-    modes = d['modes']
-    gxy = d['gxy']
+    ne, modes, gxy = d['ne'], d['modes'], d['gxy']
 
     for m in modes:
         m['m0'] *= am2au
@@ -89,19 +87,16 @@ def main ():
                 num, loc = numloc_diff(i_list,j_list,nmod)
                 if num==1:
                     tmp = hams[loc][i_list[loc],j_list[loc]]
-                    row.append(i)
-                    col.append(j)
-                    val.append(tmp)
-                    row.append(j)
-                    col.append(i)
-                    val.append(tmp)
+                    row.extend([i,j])
+                    col.extend([j,i])
+                    val.extend([tmp,tmp])
             else:
                 tmp = 0.0
                 for m in xrange(nmod):
-                    rm = modes[m]['ri']+i_list[m]*(modes[m]['rf']-modes[m]['ri'])/modes[m]['nr']
+                    rm = modes[m]['ri']+i_list[m]*(modes[m]['rf']-modes[m]['ri'])/(modes[m]['nr']-1)-modes[m]['re']
                     tmp += hams[m][i_list[m],i_list[m]]
                     for n in xrange(m+1,nmod):
-                        rn = modes[n]['ri']+i_list[n]*(modes[n]['rf']-modes[n]['ri'])/modes[n]['nr']
+                        rn = modes[n]['ri']+i_list[n]*(modes[n]['rf']-modes[n]['ri'])/(modes[n]['nr']-1)-modes[n]['re']
                         tmp += get_pot_2d(vmn[m][n],rm,rn)
                 row.append(i)
                 col.append(j)
@@ -128,9 +123,9 @@ def main ():
         q = np.empty(ndim,dtype=float)
         for i in xrange(ndim):
             i_list = decode(i,cum_prod,nmod)
-            q[i] = m['ri']+i_list[imod]*(m['rf']-m['ri'])/m['nr']-m['re']
-        qwave = np.array([[q[i]*wavefunc[i,j] for j in xrange(ne)] for i in xrange(ndim)])
-        qmod = np.dot(wavefunc.T,qwave)
+            q[i] = m['ri']+i_list[imod]*(m['rf']-m['ri'])/(m['nr']-1)-m['re']
+        qwav = np.array([q[i]*wavefunc[i,:] for i in xrange(ndim)])
+        qmod = np.dot(wavefunc.T,qwav)
         savelog({'qmod_%d'%imod:qmod})
 
 
